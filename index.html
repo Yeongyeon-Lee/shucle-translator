@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>셔클 번역기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #2563EB;
+      --primary-light: #EFF6FF;
+      --primary-dark: #1D4ED8;
+      --bg: #F8FAFC;
+      --card: #ffffff;
+      --text: #1E293B;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --danger: #EF4444;
+      --success: #10B981;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .app-header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-emoji { font-size: 26px; line-height: 1; }
+    .logo-title { font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: -0.3px; }
+    .logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .btn-ghost {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .btn-ghost.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+    /* API Panel */
+    .api-panel {
+      background: #F8FAFF;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.28s ease, opacity 0.2s ease;
+    }
+    .api-panel.open { max-height: 160px; opacity: 1; }
+
+    .api-panel-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px 24px;
+    }
+
+    .api-desc { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .api-desc a { color: var(--primary); text-decoration: none; }
+    .api-desc a:hover { text-decoration: underline; }
+
+    .api-key-form { display: flex; gap: 8px; max-width: 520px; }
+
+    .api-key-form input {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+      background: white;
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+    .api-key-form input:focus { border-color: var(--primary); }
+
+    .btn-primary {
+      padding: 9px 20px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .api-key-status { margin-top: 8px; font-size: 12px; }
+    .api-key-status.ok { color: var(--success); }
+    .api-key-status.err { color: var(--danger); }
+
+    /* Main */
+    .main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    /* Banners */
+    .api-needed-banner {
+      background: #FFFBEB;
+      border: 1.5px solid #FDE68A;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #92400E;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .api-needed-banner.show { display: flex; }
+    .api-needed-banner button {
+      margin-left: auto;
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border: 1.5px solid #F59E0B;
+      border-radius: 7px;
+      background: white;
+      color: #92400E;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .api-needed-banner button:hover { background: #FEF3C7; }
+
+    .error-box {
+      background: #FEF2F2;
+      border: 1.5px solid #FECACA;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--danger);
+      margin-bottom: 20px;
+      display: none;
+    }
+    .error-box.show { display: block; }
+
+    /* Input Card */
+    .input-card {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .input-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .input-label span:first-child { font-size: 14px; font-weight: 700; }
+    .char-count { font-size: 12px; color: var(--muted); }
+
+    #korean-input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: inherit;
+      line-height: 1.75;
+      resize: vertical;
+      outline: none;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.15s, background 0.15s;
+      min-height: 120px;
+    }
+    #korean-input:focus { border-color: var(--primary); background: white; }
+    #korean-input::placeholder { color: #CBD5E1; }
+
+    .input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      gap: 12px;
+    }
+    .input-hint { font-size: 12px; color: var(--muted); }
+
+    #translate-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 32px;
+      border: none;
+      border-radius: 10px;
+      background: var(--primary);
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    #translate-btn:hover:not(:disabled) { background: var(--primary-dark); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    #translate-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    #translate-btn.loading .spinner { display: block; }
+    #translate-btn.loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results */
+    .results-header { margin-bottom: 14px; }
+    .results-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 1100px) { .results-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 700px)  { .results-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px)  { .results-grid { grid-template-columns: 1fr; } }
+
+    /* Language Card */
+    .lang-card {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+    .lang-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .lang-card.has-result { border-color: #BFDBFE; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      gap: 8px;
+    }
+
+    .lang-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .lang-flag { font-size: 20px; flex-shrink: 0; line-height: 1; }
+    .lang-names { min-width: 0; }
+    .lang-name { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; }
+    .lang-native { font-size: 11px; color: var(--muted); }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .copy-btn:hover:not([disabled]) { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .copy-btn.copied { border-color: var(--success); color: var(--success); background: #ECFDF5; }
+    .copy-btn[disabled] { opacity: 0.35; cursor: default; }
+
+    .card-body {
+      padding: 14px;
+      flex: 1;
+      min-height: 90px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .translation-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .card-empty {
+      font-size: 13px;
+      color: #CBD5E1;
+      align-self: center;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Skeleton */
+    .skeleton-wrap { width: 100%; }
+    .skeleton-line {
+      height: 13px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+      background-size: 300% 100%;
+      animation: shimmer 1.4s infinite;
+      margin-bottom: 9px;
+    }
+    .skeleton-line:nth-child(2) { width: 82%; }
+    .skeleton-line:nth-child(3) { width: 58%; margin-bottom: 0; }
+    @keyframes shimmer {
+      0% { background-position: 300% 0; }
+      100% { background-position: -300% 0; }
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #1E293B;
+      color: white;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 640px) {
+      .header-inner { padding: 12px 16px; }
+      .main { padding: 20px 16px 60px; }
+      .api-panel-inner { padding: 14px 16px; }
+      .logo-sub { display: none; }
+      .input-footer { flex-direction: column; align-items: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-emoji">🚌</span>
+      <div>
+        <div class="logo-title">셔클 번역기</div>
+        <div class="logo-sub">셔클 용어를 알고 있는 서비스 전용 번역기</div>
+      </div>
+    </div>
+    <button class="btn-ghost" id="api-key-btn">🔑 API 키 설정</button>
+  </div>
+
+  <div class="api-panel" id="api-panel">
+    <div class="api-panel-inner">
+      <p class="api-desc">
+        번역에는 Anthropic API 키가 필요합니다. 키는 브라우저 로컬 스토리지에만 저장되며 외부 서버로 전송되지 않습니다.
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">키 발급하기 →</a>
+      </p>
+      <div class="api-key-form">
+        <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+        <button class="btn-primary" id="api-key-save">저장</button>
+        <button class="btn-ghost" id="api-key-clear" style="display:none">삭제</button>
+      </div>
+      <div class="api-key-status" id="api-key-status"></div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="api-needed-banner" id="api-needed-banner">
+    <span>🔑 번역하려면 Anthropic API 키가 필요해요.</span>
+    <button id="banner-set-key">API 키 설정하기</button>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+
+  <div class="input-card">
+    <div class="input-label">
+      <span>🇰🇷 한국어 입력</span>
+      <span class="char-count" id="char-count">0자</span>
+    </div>
+    <textarea
+      id="korean-input"
+      rows="5"
+      placeholder="번역할 한국어 텍스트를 입력하세요&#10;&#10;예) 라이더가 호출을 완료했습니다. 드라이버앱에서 배차 현황을 확인해 주세요."
+    ></textarea>
+    <div class="input-footer">
+      <span class="input-hint">셔클 내부 용어(라앱, 드앱, 모서, DRT 등)를 자동으로 인식합니다. · Ctrl+Enter로 번역</span>
+      <button id="translate-btn">
+        <div class="spinner"></div>
+        <span class="btn-label">번역하기</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="results-section">
+    <div class="results-header">
+      <span class="results-title">번역 결과</span>
+    </div>
+    <div class="results-grid" id="results-grid"></div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+const SHUCLE_TERMS = [
+  { term: '라앱', full: '라이더앱', desc: '승객(라이더)이 DRT/택시 등을 호출하는 앱' },
+  { term: '드앱', full: '드라이버앱', desc: '기사(드라이버)가 배차를 받고 운행 정보를 확인하는 앱' },
+  { term: '비앱', full: '비히클앱', desc: '차량(Vehicle)에 탑재되는 앱' },
+  { term: '검수앱', full: '내비 검수앱', desc: '내비게이션 검수 전용 앱' },
+  { term: '기사앱', full: '택시기사앱', desc: '택시 기사 전용 앱' },
+  { term: '똑타', full: '똑타 (경기도 통합 MaaS 앱)', desc: '경기도에서 운영하는 통합 교통 앱. 셔클 플랫폼 기반' },
+  { term: '이응패스', full: '이응패스 (세종시 교통 통합패스)', desc: '세종시에서 운영하는 교통 통합 패스 서비스' },
+  { term: '화이트라벨앱', full: '화이트라벨 앱', desc: '지자체·파트너사별로 커스텀 브랜딩해 제공하는 앱' },
+  { term: '운영툴', full: '운영 툴 (관제시스템)', desc: 'DRT·택시 서비스를 운영·관리하는 백오피스 웹 툴' },
+  { term: '관제툴', full: '관제 툴', desc: '운영툴의 다른 명칭' },
+  { term: '관제', full: '관제 툴 / 관제시스템', desc: '운영툴을 가리키는 줄임말' },
+  { term: '맵툴', full: '맵 에디터 툴', desc: '서비스 지역, 정류장, 노선 등 지도 데이터를 편집하는 툴' },
+  { term: '인사이트툴', full: '인사이트 툴', desc: '운행·이용 데이터를 분석·조회하는 BI 툴' },
+  { term: '서포트센터', full: '서포트센터', desc: '고객 문의 대응을 위한 CS 지원 시스템' },
+  { term: '모서', full: '모빌리티서비스 (MobilityService)', desc: '배차풀을 공유하며 노선·합승·정류장 이용 여부와 운영 정책을 결정하는 서비스 단위' },
+  { term: '택서', full: '택시서비스', desc: '택시 서비스 관련 도메인 줄임말' },
+  { term: '서타', full: '서비스타입 (ServiceType)', desc: '서비스 유형을 나타내는 타입 값' },
+  { term: '운유타', full: '운행유형타입 (operationType)', desc: '운행유형을 나타내는 타입 값' },
+  { term: '성청어', full: '성인+청소년+어린이', desc: '일반석 탑승객 구분 3가지' },
+  { term: '원격호출', full: '원격 호출', desc: '운영자(관제)가 라이더를 대신해 발생시키는 호출' },
+  { term: '미리호출', full: '미리 호출 (사전 예약)', desc: '탑승 시각 이전에 미리 예약하는 호출 방식' },
+  { term: '빠른호출', full: '빠른 호출 (즉시 호출)', desc: '현재 시각 기준 즉시 배차를 요청하는 호출' },
+  { term: '전화호출', full: '전화 호출', desc: '앱이 아닌 전화로 차량을 호출하는 방식' },
+  { term: '어뷰징', full: '어뷰징 (Abusing)', desc: 'GPS 위치 조작, 허위 탑승 등 서비스 부정 이용 행위' },
+  { term: '온고잉', full: '온고잉 (Ongoing)', desc: '라이더앱에서 현재 진행 중인 호출·이용 현황 화면' },
+  { term: '알림톡', full: '카카오 알림톡', desc: '카카오톡을 통해 발송하는 서비스 알림' },
+  { term: '안심번호', full: '안심번호 (가상 연결번호)', desc: '기사-승객 간 통화 시 실제 번호 대신 사용하는 가상 번호' },
+  { term: '선착', full: '선착 (차량 먼저 도착)', desc: '배차된 차량이 라이더보다 먼저 승차 지점에 도착한 상태' },
+  { term: '정액형', full: '정액형 페널티', desc: '취소·미탑승 시 고정 금액을 부과하는 페널티 정책' },
+  { term: '정률형', full: '정률형 페널티', desc: '취소·미탑승 시 요금의 일정 비율을 부과하는 페널티 정책' },
+  { term: '호출차단형', full: '호출차단형 페널티', desc: '일정 횟수 이상 취소 시 호출을 차단하는 페널티' },
+  { term: '통검', full: '통합검색', desc: '운영툴 내 여러 데이터를 한번에 검색하는 기능' },
+  { term: '가호출', full: '가(상) 호출', desc: '배차 가능 여부를 검증하기 위한 테스트용 가상 호출' },
+  { term: '실호출', full: '실제 호출', desc: '라이더가 실제로 앱에서 발생시킨 호출' },
+  { term: '실시간DRT', full: '실시간 DRT 모니터링 화면', desc: 'DRT 차량의 실시간 위치·배차·탑승 현황을 보는 운영툴 화면' },
+  { term: '알림센터', full: '알림센터', desc: '운영툴 내 차량·서비스 이상 알림을 모아 보는 관제 기능' },
+  { term: 'DRT', full: 'Demand Responsive Transport (수요응답형 교통)', desc: '승객 수요에 따라 경로가 바뀌는 유연한 대중교통. 셔클의 핵심 서비스' },
+  { term: '노선DRT', full: '노선 형태의 DRT', desc: '고정된 노선을 기반으로 운행하는 DRT' },
+  { term: '교통약자', full: '교통약자 DRT 서비스', desc: '이동이 불편한 교통약자를 위한 DRT 서비스 유형' },
+  { term: 'PM', full: 'Personal Mobility (개인 이동수단)', desc: '킥보드·전기자전거·자전거 등 개인 이동수단 서비스' },
+  { term: '어울링', full: '어울링 (PM 대여 서비스)', desc: '셔클 플랫폼에서 운영하는 PM 대여 서비스' },
+  { term: '바우처 택시', full: '바우처 결제 방식 택시 서비스', desc: '복지 바우처로 결제하는 택시 서비스' },
+  { term: '풀링', full: '풀링 (Pooling)', desc: '여러 승객의 호출을 합승으로 처리하는 배차 방식' },
+  { term: '탄력노선', full: '탄력 노선', desc: '승객 수요에 따라 경로가 유연하게 바뀌는 노선형 DRT' },
+  { term: '고정노선', full: '고정 노선', desc: '경로가 고정된 노선형 DRT' },
+  { term: '광역콜버스', full: '광역 콜버스', desc: '경기도에서 운영하는 광역 노선형 DRT' },
+  { term: '똑버스', full: '똑버스', desc: '경기도 수요응답형 버스 서비스 브랜드명' },
+  { term: '특교', full: '특별교통수단', desc: '장애인·교통약자를 위해 운영되는 특별 교통 서비스' },
+  { term: 'GT', full: '경기교통공사', desc: '경기도 대중교통을 관할하는 공기업' },
+  { term: 'GNB', full: 'Global Navigation Bar', desc: '운영툴 상단에 고정된 전체 메뉴 내비게이션 바' },
+  { term: '로보셔틀', full: '로보셔틀 (Robo-Shuttle)', desc: '자율주행 기술을 적용한 셔틀 버스 서비스' },
+  { term: '로보버스', full: '로보버스 (Robo-Bus)', desc: '자율주행 기술을 적용한 버스 서비스' },
+  { term: '로보택시', full: '로보택시 (Robo-Taxi)', desc: '자율주행 기술을 적용한 택시 서비스' },
+  { term: 'S2S', full: 'S2S (Stop-to-Stop)', desc: '정류장에서 정류장으로 이동하는 방식' },
+  { term: 'D2D', full: 'D2D (Door-to-Door)', desc: '승객의 문 앞까지 픽업·하차하는 방식' },
+  { term: 'FMS', full: 'FMS (Fleet Management System)', desc: '차량 운행 전체를 관제하는 시스템' },
+  { term: 'ETA', full: 'ETA (Estimated Time of Arrival)', desc: '목적지 또는 승차지까지의 예상 도착 시간' },
+  { term: 'POI', full: 'POI (Point Of Interest)', desc: '앱 내 목적지 설정 시 사용되는 관심지점 데이터' },
+  { term: '서비스존', full: '서비스존 (Service Zone)', desc: 'DRT 서비스가 운행되는 지리적 구역' },
+  { term: 'MaaS', full: 'MaaS (Mobility as a Service)', desc: '여러 교통수단을 통합해 하나의 플랫폼으로 제공하는 서비스 개념' },
+  { term: '배차', full: '배차', desc: '호출에 차량을 할당하는 것. 최적의 차량을 연결하는 과정' },
+  { term: '승차지', full: '승차 지점', desc: '라이더가 차량에 탑승하는 장소. 픽업 지점' },
+  { term: '하차지', full: '하차 지점', desc: '라이더가 차량에서 내리는 장소. 드롭오프 지점' },
+  { term: '미탑승', full: '미탑승', desc: '배차된 차량이 도착했으나 라이더가 탑승하지 않은 상태' },
+  { term: '첨두시간', full: '첨두시간 (Peak Hour)', desc: '교통량이 가장 높은 시간대. 출퇴근 시간대' },
+  { term: '바우처', full: '바우처 (Voucher)', desc: '복지·지원 목적으로 지급되는 교통 이용 쿠폰' },
+  { term: '정액권', full: '정액권', desc: '일정 금액을 선불로 충전해두고 사용하는 교통 이용권' },
+  { term: '운수사', full: '운수 사업자', desc: '실제 차량 운행을 담당하는 운송 사업자' },
+  { term: '운영사', full: '운영 사업자', desc: '서비스 지역의 운영을 담당하는 사업자' },
+  { term: '지자체', full: '지방자치단체', desc: '지역 교통 인프라 사업을 발의하고 운영하는 지방 행정기관' },
+  { term: 'opuser', full: '운영툴 사용자 계정 (operator user)', desc: '관제시스템에 로그인할 수 있는 관리자 계정' },
+  { term: 'RS', full: 'RS (Revenue Share)', desc: '플랫폼과 운영사 간의 수익 배분 방식' },
+  { term: '호차', full: '차량 호차 번호', desc: '차량을 식별하는 순번/번호' },
+  { term: '모달리티', full: 'Modality', desc: '현재는 모빌리티서비스로 대체된 레거시 개념. DRT 운행 유형 구분' },
+  { term: '이응', full: '이응 (세종 라이더앱)', desc: '세종특별자치시와 현대자동차가 함께 운영하는 라이더 앱' },
+  { term: '슈퍼셋', full: '슈퍼셋 (Superset)', desc: '플랫폼 운영 데이터로 차트를 생성하는 데이터 시각화 도구' },
+  { term: '광역DRT', full: '광역 DRT', desc: '서비스 지역을 넘어 교통 거점까지 이동하는 DRT 서비스' },
+  { term: '다이내믹', full: '다이내믹 (유연형 DRT)', desc: '실시간 수요 기반 AI Dynamic Routing으로 최적 경로를 생성하는 DRT 방식' },
+];
+
+const LANGUAGES = [
+  { code: 'en',    name: '영어',       native: 'English',  flag: '🇺🇸' },
+  { code: 'hu',    name: '헝가리어',   native: 'Magyar',   flag: '🇭🇺' },
+  { code: 'ja',    name: '일본어',     native: '日本語',    flag: '🇯🇵' },
+  { code: 'zh_CN', name: '중국어 간체', native: '简体中文',  flag: '🇨🇳' },
+  { code: 'zh_TW', name: '중국어 번체', native: '繁體中文',  flag: '🇹🇼' },
+];
+
+function buildSystemPrompt() {
+  const termsText = SHUCLE_TERMS
+    .map(t => `  - ${t.term} (${t.full}): ${t.desc}`)
+    .join('\n');
+
+  return `당신은 셔클(Shucle) 모빌리티 플랫폼 서비스의 전문 번역가입니다.
+번역 결과는 검수 없이 바로 서비스에 사용되므로 최고 품질을 보장해야 합니다.
+
+## 번역 원칙
+- 직역 금지. 각 언어의 원어민이 자국 모빌리티 서비스를 사용하는 것처럼 자연스럽게 번역
+- Uber, Bolt, Grab, FREE NOW 같은 글로벌 모빌리티 서비스의 표현과 UX 패턴을 참고
+- 서비스명·브랜드명·고유명사는 원문 그대로 유지 (Shucle, DRT, 똑버스, 이응패스, MaaS 등)
+- UI에 사용될 경우 길이를 원문의 120% 이내로 유지
+- 변수/플레이스홀더({{variable}}, {0}, %s 등)는 절대 번역하지 말고 그대로 유지
+
+## 언어별 톤 가이드
+- 영어(en): 캐주얼하고 직접적. 명령형 허용. 과도한 정중함("Please kindly") 지양. Uber/Lyft 스타일
+- 헝가리어(hu): tegezés("te" 비격식) 사용. Bolt·Wolt 등 현대 헝가리 디지털 서비스 톤. magázás("Ön") 금지
+- 일본어(ja): 정중하고 자연스러운 서비스 어투(です/ます체). Uber Japan·GO 앱 스타일
+- 중국어 간체(zh_CN): 자연스러운 중국 앱 서비스 표현. 滴滴·高德 스타일
+- 중국어 번체(zh_TW): 대만 앱 서비스 표현. Uber Taiwan 스타일
+
+## 셔클 내부 용어 참고
+한국어 원문에 아래 용어가 포함된 경우 해당 언어권의 동등한 표현으로 자연스럽게 번역하세요.
+고유명사·서비스명(DRT, Shucle, 똑버스 등)은 원문 유지.
+
+${termsText}
+
+## 응답 형식
+반드시 아래 JSON 형식으로만 응답하세요. 다른 설명이나 텍스트는 절대 포함하지 마세요:
+{
+  "en": "...",
+  "hu": "...",
+  "ja": "...",
+  "zh_CN": "...",
+  "zh_TW": "..."
+}`;
+}
+
+async function callTranslate(text) {
+  const apiKey = localStorage.getItem('shucle-translator-api-key');
+  if (!apiKey) throw new Error('API_KEY_MISSING');
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      system: buildSystemPrompt(),
+      messages: [{
+        role: 'user',
+        content: `다음 한국어 텍스트를 en, hu, ja, zh_CN, zh_TW 5개 언어로 번역해주세요:\n\n${text}`,
+      }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  const raw = data.content?.[0]?.text || '';
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+    throw new Error('번역 결과를 파싱할 수 없습니다.');
+  }
+}
+
+// ── UI ──
+const $ = id => document.getElementById(id);
+
+function esc(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showError(msg) {
+  const b = $('error-box');
+  b.textContent = msg;
+  b.classList.add('show');
+}
+
+function clearError() {
+  $('error-box').classList.remove('show');
+}
+
+function renderCards(state) {
+  const grid = $('results-grid');
+  grid.innerHTML = LANGUAGES.map(lang => {
+    let bodyHtml;
+    const hasResult = state !== 'empty' && state !== 'loading' && state[lang.code];
+
+    if (state === 'empty') {
+      bodyHtml = `<div class="card-empty">—</div>`;
+    } else if (state === 'loading') {
+      bodyHtml = `<div class="skeleton-wrap">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </div>`;
+    } else {
+      const text = state[lang.code] || '';
+      bodyHtml = text
+        ? `<div class="translation-text">${esc(text)}</div>`
+        : `<div class="card-empty">번역 결과 없음</div>`;
+    }
+
+    return `
+      <div class="lang-card${hasResult ? ' has-result' : ''}" data-lang="${lang.code}">
+        <div class="card-header">
+          <div class="lang-info">
+            <span class="lang-flag">${lang.flag}</span>
+            <div class="lang-names">
+              <div class="lang-name">${lang.name}</div>
+              <div class="lang-native">${lang.native}</div>
+            </div>
+          </div>
+          <button class="copy-btn" data-lang="${lang.code}"${!hasResult ? ' disabled' : ''}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            복사
+          </button>
+        </div>
+        <div class="card-body">${bodyHtml}</div>
+      </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.copy-btn:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      const text = grid.querySelector(`.lang-card[data-lang="${lang}"] .translation-text`)?.textContent || '';
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('copied');
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 복사됨`;
+        showToast('복사되었습니다.');
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 복사`;
+        }, 2000);
+      }).catch(() => showToast('복사 실패'));
+    });
+  });
+}
+
+// API Key UI
+function updateApiKeyUI() {
+  const key = localStorage.getItem('shucle-translator-api-key') || '';
+  const status = $('api-key-status');
+  const clearBtn = $('api-key-clear');
+  const banner = $('api-needed-banner');
+
+  if (key) {
+    status.className = 'api-key-status ok';
+    status.textContent = '✓ API 키가 저장되어 있습니다.';
+    clearBtn.style.display = 'inline-flex';
+    banner.classList.remove('show');
+    $('api-key-input').value = '';
+    $('api-key-input').placeholder = '이미 저장됨 — 변경하려면 새 키를 입력하세요';
+  } else {
+    status.className = 'api-key-status';
+    status.textContent = '';
+    clearBtn.style.display = 'none';
+    banner.classList.add('show');
+    $('api-key-input').placeholder = 'sk-ant-api03-...';
+  }
+}
+
+$('api-key-btn').addEventListener('click', () => {
+  const panel = $('api-panel');
+  const btn = $('api-key-btn');
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+  if (isOpen) setTimeout(() => $('api-key-input').focus(), 50);
+});
+
+$('banner-set-key').addEventListener('click', () => {
+  $('api-panel').classList.add('open');
+  $('api-key-btn').classList.add('active');
+  setTimeout(() => $('api-key-input').focus(), 50);
+});
+
+$('api-key-save').addEventListener('click', () => {
+  const val = $('api-key-input').value.trim();
+  const status = $('api-key-status');
+  if (!val) {
+    status.className = 'api-key-status err';
+    status.textContent = 'API 키를 입력해주세요.';
+    return;
+  }
+  if (!val.startsWith('sk-ant-')) {
+    status.className = 'api-key-status err';
+    status.textContent = 'Anthropic API 키 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).';
+    return;
+  }
+  localStorage.setItem('shucle-translator-api-key', val);
+  updateApiKeyUI();
+});
+
+$('api-key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $('api-key-save').click();
+});
+
+$('api-key-clear').addEventListener('click', () => {
+  if (!confirm('저장된 API 키를 삭제할까요?')) return;
+  localStorage.removeItem('shucle-translator-api-key');
+  updateApiKeyUI();
+});
+
+$('korean-input').addEventListener('input', e => {
+  $('char-count').textContent = `${e.target.value.length}자`;
+});
+
+$('korean-input').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') $('translate-btn').click();
+});
+
+$('translate-btn').addEventListener('click', async () => {
+  const text = $('korean-input').value.trim();
+  if (!text) { showError('번역할 텍스트를 입력해주세요.'); return; }
+
+  const apiKey = localStorage.getItem('shucle-translator-api-key');
+  if (!apiKey) {
+    $('api-panel').classList.add('open');
+    $('api-key-btn').classList.add('active');
+    setTimeout(() => $('api-key-input').focus(), 50);
+    return;
+  }
+
+  clearError();
+  $('translate-btn').disabled = true;
+  $('translate-btn').classList.add('loading');
+  renderCards('loading');
+
+  try {
+    const result = await callTranslate(text);
+    renderCards(result);
+  } catch (err) {
+    const msg = err.message;
+    if (msg === 'API_KEY_MISSING') {
+      showError('API 키를 먼저 설정해주세요.');
+    } else if (msg.includes('401') || msg.toLowerCase().includes('authentication') || msg.toLowerCase().includes('invalid x-api-key')) {
+      showError('API 키가 유효하지 않습니다. 키를 다시 확인해주세요.');
+    } else if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
+      showError('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+    } else {
+      showError(`번역 오류: ${msg}`);
+    }
+    renderCards('empty');
+  } finally {
+    $('translate-btn').disabled = false;
+    $('translate-btn').classList.remove('loading');
+  }
+});
+
+// Init
+renderCards('empty');
+updateApiKeyUI();
+</script>
+</body>
+</html>
