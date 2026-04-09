@@ -496,7 +496,7 @@ const SHUCLE_TERMS = [
   { term: '관제', full: '관제 툴 / 관제시스템', desc: '운영툴을 가리키는 줄임말' },
   { term: '맵툴', full: '맵 에디터 툴', desc: '서비스 지역, 정류장, 노선 등 지도 데이터를 편집하는 툴' },
   { term: '인사이트툴', full: '인사이트 툴', desc: '운행·이용 데이터를 분석·조회하는 BI 툴' },
-  { term: '서포트센터', full: '서포트센터', desc: '고객 문의 대응을 위한 CS 지원 시스템' },
+  { term: '서포트센터', full: '서포트센터', desc: '고객 문의 대응을 위한 CS 지원 시원 시스템' },
   { term: '모서', full: '모빌리티서비스 (MobilityService)', desc: '배차풀을 공유하며 노선·합승·정류장 이용 여부와 운영 정책을 결정하는 서비스 단위' },
   { term: '택서', full: '택시서비스', desc: '택시 서비스 관련 도메인 줄임말' },
   { term: '서타', full: '서비스타입 (ServiceType)', desc: '서비스 유형을 나타내는 타입 값' },
@@ -624,7 +624,7 @@ async function callTranslate(text) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': apiKey,
+      'Authorization': `Bearer ${apiKey}`,
       'X-Project-Id': '',
     },
     body: JSON.stringify({
@@ -639,7 +639,8 @@ async function callTranslate(text) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || err?.message || `HTTP ${res.status}`);
+    const errMsg = err?.error?.message || err?.message || '';
+    throw new Error(errMsg || `HTTP ${res.status}`);
   }
 
   const data = await res.json();
@@ -839,11 +840,13 @@ $('translate-btn').addEventListener('click', async () => {
     if (msg === 'API_KEY_MISSING') {
       showError('API 키를 먼저 설정해주세요.');
     } else if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
-      showError('API 키가 유효하지 않습니다. 키를 다시 확인해주세요.');
+      showError('API 키가 유효하지 않습니다. H Chat에서 키를 다시 발급받아 입력해주세요.');
+    } else if (msg.includes('403') || msg.toLowerCase().includes('forbidden')) {
+      showError('접근이 거부되었습니다(403). API 키를 다시 확인하거나, 사내망(VPN)에 연결되어 있는지 확인해주세요.');
     } else if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
       showError('일일 사용량을 초과했거나 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
-    } else if (msg.includes('Failed to fetch') || msg.toLowerCase().includes('network')) {
-      showError('네트워크 오류입니다. 사내망에 연결되어 있는지 확인해주세요.');
+    } else if (msg.includes('Failed to fetch') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('cors')) {
+      showError('네트워크 오류입니다. 사내망(VPN)에 연결되어 있는지 확인해주세요.');
     } else {
       showError(`번역 오류: ${msg}`);
     }
