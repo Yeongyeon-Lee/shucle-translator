@@ -29,7 +29,6 @@
       min-height: 100vh;
     }
 
-    /* Header */
     .app-header {
       background: white;
       border-bottom: 1px solid var(--border);
@@ -71,7 +70,6 @@
     .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
     .btn-ghost.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
-    /* API Panel */
     .api-panel {
       background: #F8FAFF;
       border-bottom: 1px solid var(--border);
@@ -80,7 +78,7 @@
       opacity: 0;
       transition: max-height 0.28s ease, opacity 0.2s ease;
     }
-    .api-panel.open { max-height: 160px; opacity: 1; }
+    .api-panel.open { max-height: 220px; opacity: 1; }
 
     .api-panel-inner {
       max-width: 1280px;
@@ -88,13 +86,19 @@
       padding: 16px 24px;
     }
 
-    .api-desc { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .api-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
     .api-desc a { color: var(--primary); text-decoration: none; }
     .api-desc a:hover { text-decoration: underline; }
 
-    .api-key-form { display: flex; gap: 8px; max-width: 520px; }
+    .api-settings-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      max-width: 640px;
+      margin-bottom: 8px;
+    }
 
-    .api-key-form input {
+    .api-settings-row input {
       flex: 1;
       padding: 9px 14px;
       border: 1.5px solid var(--border);
@@ -106,7 +110,21 @@
       color: var(--text);
       transition: border-color 0.15s;
     }
-    .api-key-form input:focus { border-color: var(--primary); }
+    .api-settings-row input:focus { border-color: var(--primary); }
+
+    .api-settings-row select {
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background: white;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .api-settings-row select:focus { border-color: var(--primary); }
 
     .btn-primary {
       padding: 9px 20px;
@@ -123,18 +141,16 @@
     }
     .btn-primary:hover { background: var(--primary-dark); }
 
-    .api-key-status { margin-top: 8px; font-size: 12px; }
+    .api-key-status { font-size: 12px; }
     .api-key-status.ok { color: var(--success); }
     .api-key-status.err { color: var(--danger); }
 
-    /* Main */
     .main {
       max-width: 1280px;
       margin: 0 auto;
       padding: 28px 24px 60px;
     }
 
-    /* Banners */
     .api-needed-banner {
       background: #FFFBEB;
       border: 1.5px solid #FDE68A;
@@ -175,7 +191,6 @@
     }
     .error-box.show { display: block; }
 
-    /* Input Card */
     .input-card {
       background: white;
       border: 1.5px solid var(--border);
@@ -255,7 +270,6 @@
     #translate-btn.loading .btn-label { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Results */
     .results-header { margin-bottom: 14px; }
     .results-title {
       font-size: 12px;
@@ -274,7 +288,6 @@
     @media (max-width: 700px)  { .results-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px)  { .results-grid { grid-template-columns: 1fr; } }
 
-    /* Language Card */
     .lang-card {
       background: white;
       border: 1.5px solid var(--border);
@@ -348,7 +361,6 @@
       text-align: center;
     }
 
-    /* Skeleton */
     .skeleton-wrap { width: 100%; }
     .skeleton-line {
       height: 13px;
@@ -365,7 +377,6 @@
       100% { background-position: -300% 0; }
     }
 
-    /* Toast */
     #toast {
       position: fixed;
       bottom: 28px;
@@ -390,6 +401,7 @@
       .api-panel-inner { padding: 14px 16px; }
       .logo-sub { display: none; }
       .input-footer { flex-direction: column; align-items: flex-end; }
+      .api-settings-row { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -410,11 +422,16 @@
   <div class="api-panel" id="api-panel">
     <div class="api-panel-inner">
       <p class="api-desc">
-        번역에는 Anthropic API 키가 필요합니다. 키는 브라우저 로컬 스토리지에만 저장되며 외부 서버로 전송되지 않습니다.
-        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">키 발급하기 →</a>
+        H Chat Personal API 키를 입력하세요. 키는 브라우저 로컬 스토리지에만 저장되며 외부로 전송되지 않습니다.
+        <a href="https://h-chat-platform.autoever.com/personal-key-lists" target="_blank" rel="noopener">키 발급하기 →</a>
       </p>
-      <div class="api-key-form">
-        <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+      <div class="api-settings-row">
+        <input type="password" id="api-key-input" placeholder="Personal API Key를 입력하세요" autocomplete="off" spellcheck="false">
+        <select id="model-select">
+          <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (추천)</option>
+          <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+          <option value="claude-haiku-4-5">Claude Haiku 4.5 (빠름)</option>
+        </select>
         <button class="btn-primary" id="api-key-save">저장</button>
         <button class="btn-ghost" id="api-key-clear" style="display:none">삭제</button>
       </div>
@@ -426,7 +443,7 @@
 <main class="main">
 
   <div class="api-needed-banner" id="api-needed-banner">
-    <span>🔑 번역하려면 Anthropic API 키가 필요해요.</span>
+    <span>🔑 번역하려면 H Chat Personal API 키가 필요해요.</span>
     <button id="banner-set-key">API 키 설정하기</button>
   </div>
 
@@ -463,6 +480,8 @@
 <div id="toast"></div>
 
 <script>
+const HCHAT_BASE = 'https://internal-apigw-kr.hmg-corp.io/hchat-in/api/v3/openai/deployments';
+
 const SHUCLE_TERMS = [
   { term: '라앱', full: '라이더앱', desc: '승객(라이더)이 DRT/택시 등을 호출하는 앱' },
   { term: '드앱', full: '드라이버앱', desc: '기사(드라이버)가 배차를 받고 운행 정보를 확인하는 앱' },
@@ -591,36 +610,40 @@ ${termsText}
 }`;
 }
 
+function getStoredKey() { return localStorage.getItem('shucle-translator-api-key') || ''; }
+function getStoredModel() { return localStorage.getItem('shucle-translator-model') || 'claude-sonnet-4-6'; }
+
 async function callTranslate(text) {
-  const apiKey = localStorage.getItem('shucle-translator-api-key');
+  const apiKey = getStoredKey();
   if (!apiKey) throw new Error('API_KEY_MISSING');
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const model = getStoredModel();
+  const endpoint = `${HCHAT_BASE}/${model}/chat/completions`;
+
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true',
+      'Content-Type': 'application/json',
+      'Authorization': apiKey,
+      'X-Project-Id': '',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model,
+      messages: [
+        { role: 'system', content: buildSystemPrompt() },
+        { role: 'user', content: `다음 한국어 텍스트를 en, hu, ja, zh_CN, zh_TW 5개 언어로 번역해주세요:\n\n${text}` },
+      ],
       max_tokens: 2048,
-      system: buildSystemPrompt(),
-      messages: [{
-        role: 'user',
-        content: `다음 한국어 텍스트를 en, hu, ja, zh_CN, zh_TW 5개 언어로 번역해주세요:\n\n${text}`,
-      }],
     }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    throw new Error(err?.error?.message || err?.message || `HTTP ${res.status}`);
   }
 
   const data = await res.json();
-  const raw = data.content?.[0]?.text || '';
+  const raw = data.choices?.[0]?.message?.content || '';
 
   try {
     return JSON.parse(raw);
@@ -652,9 +675,7 @@ function showError(msg) {
   b.classList.add('show');
 }
 
-function clearError() {
-  $('error-box').classList.remove('show');
-}
+function clearError() { $('error-box').classList.remove('show'); }
 
 function renderCards(state) {
   const grid = $('results-grid');
@@ -717,16 +738,18 @@ function renderCards(state) {
   });
 }
 
-// API Key UI
 function updateApiKeyUI() {
-  const key = localStorage.getItem('shucle-translator-api-key') || '';
+  const key = getStoredKey();
+  const model = getStoredModel();
   const status = $('api-key-status');
   const clearBtn = $('api-key-clear');
   const banner = $('api-needed-banner');
 
+  $('model-select').value = model;
+
   if (key) {
     status.className = 'api-key-status ok';
-    status.textContent = '✓ API 키가 저장되어 있습니다.';
+    status.textContent = `✓ API 키가 저장되어 있습니다. 사용 모델: ${model}`;
     clearBtn.style.display = 'inline-flex';
     banner.classList.remove('show');
     $('api-key-input').value = '';
@@ -736,7 +759,7 @@ function updateApiKeyUI() {
     status.textContent = '';
     clearBtn.style.display = 'none';
     banner.classList.add('show');
-    $('api-key-input').placeholder = 'sk-ant-api03-...';
+    $('api-key-input').placeholder = 'Personal API Key를 입력하세요';
   }
 }
 
@@ -756,18 +779,21 @@ $('banner-set-key').addEventListener('click', () => {
 
 $('api-key-save').addEventListener('click', () => {
   const val = $('api-key-input').value.trim();
+  const model = $('model-select').value;
   const status = $('api-key-status');
-  if (!val) {
+
+  // 모델은 항상 저장 (키 변경 없이 모델만 바꿀 수도 있음)
+  localStorage.setItem('shucle-translator-model', model);
+
+  const existingKey = getStoredKey();
+  if (!val && !existingKey) {
     status.className = 'api-key-status err';
     status.textContent = 'API 키를 입력해주세요.';
     return;
   }
-  if (!val.startsWith('sk-ant-')) {
-    status.className = 'api-key-status err';
-    status.textContent = 'Anthropic API 키 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).';
-    return;
+  if (val) {
+    localStorage.setItem('shucle-translator-api-key', val);
   }
-  localStorage.setItem('shucle-translator-api-key', val);
   updateApiKeyUI();
 });
 
@@ -793,8 +819,7 @@ $('translate-btn').addEventListener('click', async () => {
   const text = $('korean-input').value.trim();
   if (!text) { showError('번역할 텍스트를 입력해주세요.'); return; }
 
-  const apiKey = localStorage.getItem('shucle-translator-api-key');
-  if (!apiKey) {
+  if (!getStoredKey()) {
     $('api-panel').classList.add('open');
     $('api-key-btn').classList.add('active');
     setTimeout(() => $('api-key-input').focus(), 50);
@@ -813,10 +838,12 @@ $('translate-btn').addEventListener('click', async () => {
     const msg = err.message;
     if (msg === 'API_KEY_MISSING') {
       showError('API 키를 먼저 설정해주세요.');
-    } else if (msg.includes('401') || msg.toLowerCase().includes('authentication') || msg.toLowerCase().includes('invalid x-api-key')) {
+    } else if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
       showError('API 키가 유효하지 않습니다. 키를 다시 확인해주세요.');
     } else if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
-      showError('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+      showError('일일 사용량을 초과했거나 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+    } else if (msg.includes('Failed to fetch') || msg.toLowerCase().includes('network')) {
+      showError('네트워크 오류입니다. 사내망에 연결되어 있는지 확인해주세요.');
     } else {
       showError(`번역 오류: ${msg}`);
     }
